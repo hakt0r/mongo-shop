@@ -32,9 +32,9 @@ module.exports = {
     try {
       item = await Item.findById(id);
     } catch (error) {
-      res.status(400).send(error.message);
+      return res.status(400).send(error.message);
     }
-    if (!item) res.status(404).send('not found');
+    if (!item) return res.status(404).send('not found');
     res.status(200).send(item);
   },
 

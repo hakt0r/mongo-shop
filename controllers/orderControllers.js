@@ -24,6 +24,7 @@ module.exports = {
       });
       
       if (order) await order.save();
+      
       res.status(201).send(order);
     
     } catch (error) {
@@ -35,7 +36,15 @@ module.exports = {
   getOrders: async (req, res) => {
     const filter = req.body;
 
-    const list = await Order.find({ ...filter });
+    const list = await Order
+    .find({ ...filter })
+    .populate('user',['email','name'])
+    .populate({
+      path:'items.item',
+      model: "Item",
+      select: ['name','price']
+    });
+
     res.status(200).send(list);
   },
 
@@ -43,11 +52,23 @@ module.exports = {
     const { id } = req.params;
     let order;
     try {
-      order = await Order.findById(id);
+      order = await Order
+      .findById(id)
+      .populate('user',['email','name'])
+      .populate({
+        path:'items.item',
+        model: "Item",
+        select: ['name','price']
+      });
+
+      // order.user // have => afe4a67a546ae5f76ae54fa7e65f47ae5fea
+      //            // want => { name:"anx", ... }
+      // order.user = await User.findById(order.user);
     } catch (error) {
-      res.status(400).send(error.message);
+      return res.status(400).send(error.message);
     }
-    if (!order) res.status(404).send('not found');
+    if ( ! order )
+      return res.status(404).send('not found');
     res.status(200).send(order);
   },
 

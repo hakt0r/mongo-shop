@@ -12,7 +12,7 @@ const { Order } = require('../models/orderModel');
 
 const email = Date.now() + '@nishaEmail.order';
 
-let item, user;
+let item, anotherItem, user;
 
 beforeAll(async () => {
   
@@ -37,11 +37,22 @@ beforeAll(async () => {
     discountCategory: 'none',
   });
   item = createRes.data;
+
+  const createRes2 = await createItem({
+    name: 'order-test-anotherItem',
+    categoryLevel1: 'C.L. 1.1',
+    categoryLevel2: 'C.L. 2.1',
+    categoryLevel3: 'C.L. 3.1',
+    currentPrice: 20,
+    discountCategory: 'none',
+  });
+  anotherItem = createRes2.data;
 });
 
 afterAll( async () => {
   await User.deleteOne({email});
   await Item.deleteOne({name:'order-test-item'});
+  await Item.deleteOne({name:'order-test-anotherItem'});
   await Order.deleteMany({user:user._id});
   db.close();
 });
@@ -104,12 +115,40 @@ test('simple create order', async () => {
 
 test('should get single order', async () => {
   const createRes = await create({
-    items: [{ item: item._id, quantity: 45, price: 34, priceReduction: 21 }],
+    items: [{
+      item: item._id,
+      quantity: 45,
+      price: 34,
+      priceReduction: 21
+    },
+    {
+      item: anotherItem._id,
+      quantity: 12,
+      price: 32,
+      priceReduction: 12
+    }],
   });
-
   const getRes = await get(createRes.data._id);
-
-  expect(getRes.data.items.length).toEqual(1);
+  console.log(getRes.data.user)
+  // console.log(typeof user._id)
+  // console.log(user._id)
+  // => {
+  // id: 'ef7a543fe423f5a42ef54ae2f',
+  // ref: "User",
+  // toString: ()=> this.id;
+  // }
+  //console.log(user._id) // this prints a string but it ain't a string
+                          // it's an object representing a reference
+                          // because this user object comes directly
+                          // out of mongoose, not axios
+                          // => console.log calls toString() implicitly if available
+                          // => this also happen inside express when we .send() sth.
+  expect(getRes.data.user._id).toMatch(user._id.toString());
+  expect(getRes.data.items[0].item._id).toMatch(item._id);
+  expect(getRes.data.items[1].item._id).toMatch(anotherItem._id);
+  expect(getRes.data.items[1].item.price).toEqual(anotherItem.price);
+  expect(getRes.data.items[1].item.price).not.toEqual(32);
+  expect(getRes.data.items.length).toEqual(2);
 });
 
 test('list of order', async () => {
