@@ -56,7 +56,7 @@ You dont have to create routes, but: it should not thow any errors.
 
   1. Basket Case :D (User)
      User creates a list of items that he want to buy,
-     reserve the items temporarily, so othe users can see
+     reserve the items temporarily, so other users can see
      a reduced amount of available items.
   2. Order is placed (User)
      User confirms a basket and says he want to buy the

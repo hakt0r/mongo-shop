@@ -6,6 +6,12 @@ const mongoose = require('mongoose');
 const app = express();
 app.use(express.json());
 
+app.use((req,res,next)=>{
+  console.log(`${req.method.padEnd(6)} ${req.originalUrl}`)
+  // if ( req.originalUrl.match(/place/) ) debugger;
+  next();
+});
+
 const { readAuth } = require('./middlewares');
 app.use(readAuth);
 

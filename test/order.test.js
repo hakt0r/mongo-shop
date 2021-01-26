@@ -173,3 +173,37 @@ test('should delete order', async () => {
   expect(getRes.status).toBe(200);
   await expect( get(createRes.data._id) ).rejects.toThrow();
 });
+
+const testAddress = {
+  country: 'Germany',
+  address1: 'Fakestrasse 77',
+  city: 'Düsseldorf',
+  postcode: 40333
+};
+
+test('should be able to place an order', async () => {
+  const createRes = await createExampleOrder();
+  const placeRes = await place(createRes.data._id,testAddress,{provider:'paypal'});
+  const updatedUser = await User.findById(user._id);
+  expect(placeRes.data.status).toMatch('placed');
+  expect(updatedUser.savedDeliveryAddresses.pop().address1).toMatch(testAddress.address1);
+});
+
+test('should not be able to place an order twice', async () => {
+  const createRes = await createExampleOrder();
+  await place(createRes.data._id,testAddress,{provider:'paypal'});
+  await expect(
+        place(createRes.data._id,testAddress,{provider:'paypal'})
+  ).rejects.toThrow();
+});
+
+function createExampleOrder(){
+  return create({ items: [
+    { item: item._id, quantity: 45, price: 34, priceReduction: 21 },
+    { item: anotherItem._id, quantity: 12, price: 32, priceReduction: 12 }],
+  });
+}
+
+function place (id,deliveryAddress,paymentMethod){
+  return axios.post(`/orders/${id}/place`,{deliveryAddress,paymentMethod});
+}
