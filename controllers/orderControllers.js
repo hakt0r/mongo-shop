@@ -35,9 +35,14 @@ module.exports = {
 
   getOrders: async (req, res) => {
     const filter = req.body;
-
+    const isOwner = req.user.role === 'owner';
+    const userFilter = isOwner ? {} : { user: req.user._id };
     const list = await Order
-    .find({ ...filter })
+    .find({
+      ...filter,
+      ...userFilter // override user: filters to make
+      // sure noone can get order hX not suposed to see
+    })
     .populate('user',['email','name'])
     .populate({
       path:'items.item',
@@ -49,48 +54,26 @@ module.exports = {
   },
 
   getOrder: async (req, res) => {
-    const { id } = req.params;
-    let order;
-    try {
-      order = await Order
-      .findById(id)
-      .populate('user',['email','name'])
-      .populate({
-        path:'items.item',
-        model: "Item",
-        select: ['name','price']
-      });
-
-      // order.user // have => afe4a67a546ae5f76ae54fa7e65f47ae5fea
-      //            // want => { name:"anx", ... }
-      // order.user = await User.findById(order.user);
-    } catch (error) {
-      return res.status(400).send(error.message);
-    }
-    if ( ! order )
-      return res.status(404).send('not found');
-    res.status(200).send(order);
+    res.status(200).send(req.order);
   },
 
-  updateOrder: async (req, res) => {
+  updateOrder: async ({order,body,user}, res) => {
     try {
-      const { id } = req.params;
-      const order = await Order.findById(id);
-
-      if (order) Object.assign(order, { ...req.body });
-
+      const isOwner = user.role === 'owner';
+      const forceUser = isOwner ? {} : { user: user._id };
+      if (order) Object.assign(order, body, forceUser);
       await order.save();
-
       res.status(200).send(order);
     } catch (error) {
+      console.error(error);
       return res.status(400).send(error.message);
     }
   },
 
   deleteOrder: async (req, res) => {
     try {
-      const order = await Order.findOneAndDelete({_id:req.params.id});
-      if (order) res.status(200).send({ message: 'order deleted' });
+      await req.order.remove();
+      res.status(200).send({ message: 'order deleted' });
     } catch (error) {
       res.status(400).send(error.message);
     }

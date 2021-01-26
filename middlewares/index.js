@@ -1,6 +1,7 @@
 
 module.exports = {
-  checkUserRole: require('./checkUserRole'),
-  checkAuth:     require('./checkAuth'),
-  readAuth:      require('./readAuth'),
+  checkOrderUserOrOwner: require('./checkOrderUserOrOwner'),
+  checkUserRole:         require('./checkUserRole'),
+  checkAuth:             require('./checkAuth'),
+  readAuth:              require('./readAuth')
 };

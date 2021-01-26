@@ -1,7 +1,7 @@
 const express = require('express');
-//const { Order } = require('../models/orderModel');
 const router = express.Router();
-const { checkAuth } = require('../middlewares');
+
+const { checkAuth, checkOrderUserOrOwner } = require('../middlewares');
 
 router.use(checkAuth);
 
@@ -13,14 +13,11 @@ const {
   deleteOrder,
 } = require('../controllers/orderControllers');
 
-router.post('/', createOrder);
+router.post(  '/',     createOrder);
+router.get(   '/list', getOrders);
 
-router.get('/list', getOrders);
-
-router.get('/:id', getOrder);
-
-router.patch('/:id', updateOrder);
-
-router.delete('/:id', deleteOrder);
+router.get(   '/:id', checkOrderUserOrOwner, getOrder);
+router.patch( '/:id', checkOrderUserOrOwner, updateOrder);
+router.delete('/:id', checkOrderUserOrOwner, deleteOrder);
 
 module.exports = router;
